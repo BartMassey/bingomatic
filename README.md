@@ -6,7 +6,7 @@ many simultaneous Bingo games and records "bingos" as row,
 column or diagonal wins.
 
 This project was inspired by a Reddit
-[thread](<https://www.reddit.com/r/rust/comments/agelwg/is_vecoptioni32_cachefriendly/ee6w7di/),
+[thread](https://www.reddit.com/r/rust/comments/agelwg/is_vecoptioni32_cachefriendly/ee6w7di/),
 and written partly as a demo for my Systems Programming
 [course](http://wiki.cs.pdx.edu/cs201-winter2019).
 
