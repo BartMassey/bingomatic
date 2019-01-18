@@ -65,7 +65,10 @@ void print_card(struct card *card) {
 }
 
 int main() {
-    assert(has_rdrand());
+    if (!has_rdrand()) {
+        fprintf(stderr, "program requires RDRAND CPU instruction: exiting\n");
+        return 1;
+    }
     // struct bitboard markers = bitboard_new();
     struct card card = make_card();
     print_card(&card);
