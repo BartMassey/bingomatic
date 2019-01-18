@@ -44,11 +44,12 @@ struct card make_card() {
  */
 char *marker_string(uint8_t m) {
     assert(CARD_SIZE == 5);
-    static char buf[4];
+    static char buf[5];
     char *colnames = "BINGO";
+    // Numbers start at 1.
     int col = m / MARKER_ROWS;
-    int row = m % MARKER_ROWS;
-    snprintf(buf, sizeof buf, "%c%02d", colnames[col], row);
+    int w = snprintf(buf, sizeof buf, "%c%02u", colnames[col], m + 1);
+    assert(w <= sizeof buf);
     return buf;
 }
 
