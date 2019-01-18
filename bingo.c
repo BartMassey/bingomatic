@@ -14,13 +14,16 @@
 #include "bitboard.h"
 #include "rdrand.h"
 
-#define BOARD_SIZE 5
+#define CARD_SIZE 5
 #define MARKER_ROWS 15
 
-typedef uint8_t board_t[BOARD_SIZE][BOARD_SIZE];
+struct card {
+    uint8_t squares[CARD_SIZE][CARD_SIZE];
+};
 
-void make_board(board_t board) {
-    for (int col = 0; col < BOARD_SIZE; col++) {
+struct card make_card() {
+    struct card card;
+    for (int col = 0; col < CARD_SIZE; col++) {
         int base = col * MARKER_ROWS;
         uint8_t markers[MARKER_ROWS];
         for (int m = 0; m < MARKER_ROWS; m++) {
@@ -29,11 +32,41 @@ void make_board(board_t board) {
             markers[m] = markers[s];
             markers[s] = marker;
         }
+        for (int row = 0; row < CARD_SIZE; row++)
+            card.squares[row][col] = markers[row];
+    }
+    return card;
+}
+
+/*
+ * XXX This function returns a pointer to static data whose
+ * contents are overwritten on each call.
+ */
+char *marker_string(uint8_t m) {
+    assert(CARD_SIZE == 5);
+    static char buf[4];
+    char *colnames = "BINGO";
+    int col = m / MARKER_ROWS;
+    int row = m % MARKER_ROWS;
+    snprintf(buf, sizeof buf, "%c%02d", colnames[col], row);
+    return buf;
+}
+
+void print_card(struct card *card) {
+    for (int row = 0; row < CARD_SIZE; row++) {
+        char *sep = "";
+        for (int col = 0; col < CARD_SIZE; col++) {
+            printf("%s%s", sep, marker_string(card->squares[row][col]));
+            sep = " ";
+        }
+        printf("\n");
     }
 }
 
 int main() {
-    struct bitboard markers = bitboard_new();
-    
+    assert(has_rdrand());
+    // struct bitboard markers = bitboard_new();
+    struct card card = make_card();
+    print_card(&card);
     return 0;
 }
