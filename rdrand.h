@@ -1,4 +1,11 @@
 /*
+ * Copyright © 2019 Bart Massey
+ * [This program is licensed under the "MIT License"]
+ * Please see the file LICENSE in the source
+ * distribution of this software for license terms.
+ */
+
+/*
  * Access x86-64 CPU (AMD or Intel) hardware-assisted RNG.
  * https://hackage.haskell.org/package/crypto-random-0.0.9/src/cbits/rdrand.c
  */
