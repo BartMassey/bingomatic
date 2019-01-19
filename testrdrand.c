@@ -14,6 +14,11 @@
 #include "rdrand.h"
 
 int main() {
+#ifndef RDRAND
+    fprintf(stderr, "testrdrand: RDRAND disabled\n");
+    return 1;
+#endif
+
     assert(has_rdrand());
 
     for (int i = 0; i < 20; i++)
