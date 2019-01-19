@@ -80,21 +80,25 @@ static struct card make_card() {
     /* Row wins. */
     for (int row = 0; row < CARD_SIZE; row++) {
         b = &card.bingos[row];
+        *b = bitboard_new();
         for (int col = 0; col < CARD_SIZE; col++)
             bitboard_setbit(b, card.squares[row][col]);
     }
     /* Column wins. */
     for (int col = 0; col < CARD_SIZE; col++) {
         b = &card.bingos[BINGO_ROWS + col];
+        *b = bitboard_new();
         for (int row = 0; row < CARD_SIZE; row++)
-            bitboard_setbit(b, card.squares[col][row]);
+            bitboard_setbit(b, card.squares[row][col]);
     }
     /* Negative diagonal win. */
     b = &card.bingos[BINGO_COLS];
+    *b = bitboard_new();
     for (int diag = 0; diag < CARD_SIZE; diag++)
         bitboard_setbit(b, card.squares[diag][diag]);
     /* Positive diagonal win. */
     b = &card.bingos[BINGO_COLS + 1];
+    *b = bitboard_new();
     for (int diag = 0; diag < CARD_SIZE; diag++)
         bitboard_setbit(b, card.squares[CARD_SIZE - diag - 1][diag]);
 
