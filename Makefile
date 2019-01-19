@@ -7,7 +7,7 @@ CC = gcc
 CFLAGS = -O4 -Wall
 
 bingo: bingo.o bitboard.o
-	$(CC) $(CFLAGS) -o bingo $?
+	$(CC) $(CFLAGS) -o bingo bingo.o bitboard.o
 
 testrdrand: testrdrand.c
 	$(CC) $(CFLAGS) -o testrdrand testrdrand.c

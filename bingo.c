@@ -17,12 +17,22 @@
 #define CARD_SIZE 5
 #define MARKER_ROWS 15
 
+enum bingos {
+    BINGO_ROW = CARD_SIZE,
+    BINGO_COL = BINGO_ROW + CARD_SIZE,
+    BINGO_DIAG_PLUS,
+    BINGO_TOTAL
+};
+
 struct card {
     uint8_t squares[CARD_SIZE][CARD_SIZE];
+    struct bitboard bingos[BINGO_TOTAL];
 };
 
 struct card make_card() {
     struct card card;
+
+    /* Select squares for this card. */
     for (int col = 0; col < CARD_SIZE; col++) {
         int base = col * MARKER_ROWS;
         uint8_t markers[MARKER_ROWS];
@@ -35,6 +45,30 @@ struct card make_card() {
         for (int row = 0; row < CARD_SIZE; row++)
             card.squares[row][col] = markers[row];
     }
+
+    /* Populate the bitboards for the winning positions. */
+    struct bitboard *b;
+    /* Row wins. */
+    for (int row = 0; row < CARD_SIZE; row++) {
+        b = &card.bingos[row];
+        for (int col = 0; col < CARD_SIZE; col++)
+            bitboard_setbit(b, card.squares[row][col]);
+    }
+    /* Column wins. */
+    for (int col = 0; col < CARD_SIZE; col++) {
+        b = &card.bingos[BINGO_ROW + col];
+        for (int row = 0; row < CARD_SIZE; row++)
+            bitboard_setbit(b, card.squares[row][col]);
+    }
+    /* Positive diagonal win. */
+    b = &card.bingos[BINGO_COL];
+    for (int diag = 0; diag < CARD_SIZE; diag++)
+        bitboard_setbit(b, card.squares[CARD_SIZE - diag - 1][diag]);
+    /* Negative diagonal win. */
+    b = &card.bingos[BINGO_DIAG_PLUS];
+    for (int diag = 0; diag < CARD_SIZE; diag++)
+        bitboard_setbit(b, card.squares[diag][diag]);
+
     return card;
 }
 
