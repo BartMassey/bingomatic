@@ -13,7 +13,7 @@
 #include <assert.h>
 #include <stdint.h>
 
-#ifndef VALGRIND
+#ifdef RDRAND
 
 static int
 has_rdrand(void) {
@@ -49,9 +49,11 @@ rdrand32(void) {
 #else
 
 #include <stdlib.h>
+#include <unistd.h>
 
 static int
 has_rdrand(void) {
+    srandom(getpid());
     return 1;
 }
 
