@@ -58,18 +58,21 @@ has_rdrand(void) {
 }
 
 static inline uint64_t
-rdrand64_checked(void) {
-    return ((uint64_t) rand() << 32) | rand();
+rdrand64(void) {
+    uint64_t r1 = lrand48();
+    uint64_t r2 = lrand48();
+    uint64_t r3 = lrand48();
+    return (r1 << 33) ^ (r2 << 24) ^ r3;
 }
 
 static inline uint64_t
-rdrand64(void) {
-    return ((uint64_t) rand() << 32) | rand();
+rdrand64_checked(void) {
+    return rdrand64();
 }
 
 static inline uint32_t
 rdrand32(void) {
-    return rand();
+    return rdrand64();
 }
 
 #endif
