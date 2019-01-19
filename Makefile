@@ -4,7 +4,8 @@
 # distribution of this software for license terms.
 
 CC = gcc
-CFLAGS = -O4 -Wall
+CDEBUG = -O4 # -DLOGGING
+CFLAGS = $(CDEBUG) -Wall
 
 bingo: bingo.o bitboard.o
 	$(CC) $(CFLAGS) -o bingo bingo.o bitboard.o

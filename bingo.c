@@ -14,9 +14,6 @@
 #include "bitboard.h"
 #include "rdrand.h"
 
-/* Define this to get log printing. */
-#undef LOGGING
-
 #ifdef LOGGING
 #define LOG(...) (printf(__VA_ARGS__))
 #else
@@ -177,15 +174,25 @@ static void print_win(enum win_class win) {
 #endif
 }
 
-int main() {
+int main(int argc, char **argv) {
+    int ngames;
+    if (argc != 2 || (ngames = atoi(argv[1])) <= 0) {
+        fprintf(stderr, "bingo: usage: bingo <ngames>");
+        return 1;
+    }
+    LOG("%d games\n\n", ngames);
     if (!has_rdrand()) {
         fprintf(stderr, "program requires RDRAND CPU instruction: exiting\n");
         return 1;
     }
     uint64_t win_counts[WIN_TOTAL] = {0, 0, 0};
-    enum win_class win = run_game();
-    win_counts[win]++;
-    print_win(win);
+
+    for (int i = 0; i < ngames; i++) {
+        LOG("game %d:\n", i);
+        enum win_class win = run_game();
+        win_counts[win]++;
+        print_win(win);
+    }
 
     printf("%ld row\n", win_counts[WIN_ROW]);
     printf("%ld col\n", win_counts[WIN_COL]);
