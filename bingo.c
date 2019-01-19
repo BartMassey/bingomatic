@@ -14,14 +14,23 @@
 #include "bitboard.h"
 #include "rdrand.h"
 
+/* Define this to get log printing. */
+#undef LOGGING
+
+#ifdef LOGGING
+#define LOG(...) (printf(__VA_ARGS__))
+#else
+#define LOG(...) /**/
+#endif
+
 #define CARD_SIZE 5
 #define MARKER_ROWS 15
 #define NMARKERS (CARD_SIZE * MARKER_ROWS)
 
 /*
  * Storage order for bingo bitboards:
- *   Row 0, 1, 2
- *   Col 0, 1, 2
+ *   Row 0, 1 .. 4
+ *   Col 0, 1 .. 4
  *   "Negative Diagonal" (0,0), (1,1) .. (4,4)
  *   "Positive Diagonal" (4,0), (3,1) .. (0,4)
  */
@@ -35,6 +44,7 @@ enum win_class {
     WIN_ROW,
     WIN_COL,
     WIN_DIAG,
+    WIN_TOTAL,
 };
 
 struct card {
@@ -47,7 +57,7 @@ struct card {
  * of marker values to initialize with, initialize the array
  * with a random permutation of the spanned markers.
  */
-void random_markers(uint8_t *markers, int start, int end) {
+static void random_markers(uint8_t *markers, int start, int end) {
     for (int m = start; m < end; m++) {
         uint32_t i = m - start;
         uint32_t j = randrange(i + 1);
@@ -56,7 +66,7 @@ void random_markers(uint8_t *markers, int start, int end) {
     }
 }
 
-struct card make_card() {
+static struct card make_card() {
     struct card card;
 
     /* Select squares for this card. */
@@ -94,11 +104,12 @@ struct card make_card() {
     return card;
 }
 
+#ifdef LOGGING
 /*
  * XXX This function returns a pointer to static data whose
  * contents are overwritten on each call.
  */
-char *marker_string(uint8_t m) {
+static char *marker_string(uint8_t m) {
     assert(CARD_SIZE == 5);
     static char buf[5];
     char *colnames = "BINGO";
@@ -108,8 +119,12 @@ char *marker_string(uint8_t m) {
     assert(w <= sizeof buf);
     return buf;
 }
+#endif
 
-void print_card(struct card *card) {
+static void print_card(struct card *card) {
+#ifndef LOGGING
+    return;
+#else
     for (int row = 0; row < CARD_SIZE; row++) {
         char *sep = "";
         for (int col = 0; col < CARD_SIZE; col++) {
@@ -118,20 +133,21 @@ void print_card(struct card *card) {
         }
         printf("\n");
     }
+    printf("\n");
+#endif
 }
 
-enum win_class run_game(void) {
+static enum win_class run_game(void) {
     struct bitboard markers = bitboard_new();
     struct card card = make_card();
     uint8_t draw[NMARKERS];
     random_markers(draw, 0, NMARKERS);
 
     print_card(&card);
-    printf("\n");
 
     for (int turn = 0; turn < NMARKERS; turn++) {
         uint8_t m = draw[turn];
-        printf("%s\n", marker_string(m));
+        LOG("%s\n", marker_string(m));
         bitboard_setbit(&markers, m);
         for (int b = 0; b < BINGO_TOTAL; b++) {
             if (bitboard_subset(&card.bingos[b], &markers)) {
@@ -148,17 +164,31 @@ enum win_class run_game(void) {
     assert(0);
 }
 
+static void print_win(enum win_class win) {
+#ifndef LOGGING
+    return;
+#else
+    switch (win) {
+    case WIN_ROW: LOG("row win\n\n"); break;
+    case WIN_COL: LOG("col win\n\n"); break;
+    case WIN_DIAG: LOG("diag win\n\n"); break;
+    default: assert(0);
+    }
+#endif
+}
+
 int main() {
     if (!has_rdrand()) {
         fprintf(stderr, "program requires RDRAND CPU instruction: exiting\n");
         return 1;
     }
+    uint64_t win_counts[WIN_TOTAL] = {0, 0, 0};
     enum win_class win = run_game();
-    switch (win) {
-    case WIN_ROW: printf("row win\n"); break;
-    case WIN_COL: printf("col win\n"); break;
-    case WIN_DIAG: printf("diag win\n"); break;
-    default: assert(0);
-    }
+    win_counts[win]++;
+    print_win(win);
+
+    printf("%ld row\n", win_counts[WIN_ROW]);
+    printf("%ld col\n", win_counts[WIN_COL]);
+    printf("%ld diag\n", win_counts[WIN_DIAG]);
     return 0;
 }
