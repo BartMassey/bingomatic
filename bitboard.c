@@ -27,9 +27,9 @@ void bitboard_setbit(struct bitboard *b, int bit) {
     b->bits[index] |= 1L << bit;
 }
 
-int bitboard_hasbits(struct bitboard *b, struct bitboard *has) {
+int bitboard_subset(struct bitboard *b, struct bitboard *has) {
     for (int i = 0; i < 2; i++)
-        if ((b->bits[i] & has->bits[i]) != has->bits[i])
+        if ((b->bits[i] & has->bits[i]) != b->bits[i])
             return 0;
     return 1;
 }

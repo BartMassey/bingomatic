@@ -16,12 +16,25 @@
 
 #define CARD_SIZE 5
 #define MARKER_ROWS 15
+#define NMARKERS (CARD_SIZE * MARKER_ROWS)
 
+/*
+ * Storage order for bingo bitboards:
+ *   Row 0, 1, 2
+ *   Col 0, 1, 2
+ *   "Negative Diagonal" (0,0), (1,1) .. (4,4)
+ *   "Positive Diagonal" (4,0), (3,1) .. (0,4)
+ */
 enum bingos {
-    BINGO_ROW = CARD_SIZE,
-    BINGO_COL = BINGO_ROW + CARD_SIZE,
-    BINGO_DIAG_PLUS,
-    BINGO_TOTAL
+    BINGO_ROWS = CARD_SIZE,
+    BINGO_COLS = BINGO_ROWS + CARD_SIZE,
+    BINGO_TOTAL = BINGO_COLS + 2,
+};
+
+enum win_class {
+    WIN_ROW,
+    WIN_COL,
+    WIN_DIAG,
 };
 
 struct card {
@@ -29,19 +42,28 @@ struct card {
     struct bitboard bingos[BINGO_TOTAL];
 };
 
+/*
+ * Given an array of markers to be initialized, and a span
+ * of marker values to initialize with, initialize the array
+ * with a random permutation of the spanned markers.
+ */
+void random_markers(uint8_t *markers, int start, int end) {
+    for (int m = start; m < end; m++) {
+        uint32_t i = m - start;
+        uint32_t j = randrange(i + 1);
+        markers[i] = markers[j];
+        markers[j] = m;
+    }
+}
+
 struct card make_card() {
     struct card card;
 
     /* Select squares for this card. */
+    uint8_t markers[MARKER_ROWS];
     for (int col = 0; col < CARD_SIZE; col++) {
         int base = col * MARKER_ROWS;
-        uint8_t markers[MARKER_ROWS];
-        for (int m = 0; m < MARKER_ROWS; m++) {
-            uint8_t marker = (uint8_t) (m + base);
-            uint32_t s = randrange(m + 1);
-            markers[m] = markers[s];
-            markers[s] = marker;
-        }
+        random_markers(markers, base, base + MARKER_ROWS);
         for (int row = 0; row < CARD_SIZE; row++)
             card.squares[row][col] = markers[row];
     }
@@ -56,18 +78,18 @@ struct card make_card() {
     }
     /* Column wins. */
     for (int col = 0; col < CARD_SIZE; col++) {
-        b = &card.bingos[BINGO_ROW + col];
+        b = &card.bingos[BINGO_ROWS + col];
         for (int row = 0; row < CARD_SIZE; row++)
-            bitboard_setbit(b, card.squares[row][col]);
+            bitboard_setbit(b, card.squares[col][row]);
     }
-    /* Positive diagonal win. */
-    b = &card.bingos[BINGO_COL];
-    for (int diag = 0; diag < CARD_SIZE; diag++)
-        bitboard_setbit(b, card.squares[CARD_SIZE - diag - 1][diag]);
     /* Negative diagonal win. */
-    b = &card.bingos[BINGO_DIAG_PLUS];
+    b = &card.bingos[BINGO_COLS];
     for (int diag = 0; diag < CARD_SIZE; diag++)
         bitboard_setbit(b, card.squares[diag][diag]);
+    /* Positive diagonal win. */
+    b = &card.bingos[BINGO_COLS + 1];
+    for (int diag = 0; diag < CARD_SIZE; diag++)
+        bitboard_setbit(b, card.squares[CARD_SIZE - diag - 1][diag]);
 
     return card;
 }
@@ -98,13 +120,45 @@ void print_card(struct card *card) {
     }
 }
 
+enum win_class run_game(void) {
+    struct bitboard markers = bitboard_new();
+    struct card card = make_card();
+    uint8_t draw[NMARKERS];
+    random_markers(draw, 0, NMARKERS);
+
+    print_card(&card);
+    printf("\n");
+
+    for (int turn = 0; turn < NMARKERS; turn++) {
+        uint8_t m = draw[turn];
+        printf("%s\n", marker_string(m));
+        bitboard_setbit(&markers, m);
+        for (int b = 0; b < BINGO_TOTAL; b++) {
+            if (bitboard_subset(&card.bingos[b], &markers)) {
+                if (b < BINGO_ROWS)
+                    return WIN_ROW;
+                if (b < BINGO_COLS)
+                    return WIN_COL;
+                return WIN_DIAG;
+            }
+        }
+    }
+
+    /* All the markers are gone, and no one has bingoed. */
+    assert(0);
+}
+
 int main() {
     if (!has_rdrand()) {
         fprintf(stderr, "program requires RDRAND CPU instruction: exiting\n");
         return 1;
     }
-    // struct bitboard markers = bitboard_new();
-    struct card card = make_card();
-    print_card(&card);
+    enum win_class win = run_game();
+    switch (win) {
+    case WIN_ROW: printf("row win\n"); break;
+    case WIN_COL: printf("col win\n"); break;
+    case WIN_DIAG: printf("diag win\n"); break;
+    default: assert(0);
+    }
     return 0;
 }

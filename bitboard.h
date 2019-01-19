@@ -15,4 +15,4 @@ struct bitboard {
 
 extern struct bitboard bitboard_new();
 extern void bitboard_setbit(struct bitboard *b, int bit);
-extern int bitboard_hasbits(struct bitboard *b, struct bitboard *has);
+extern int bitboard_subset(struct bitboard *b, struct bitboard *has);
