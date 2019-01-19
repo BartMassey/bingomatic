@@ -13,6 +13,8 @@
 #include <assert.h>
 #include <stdint.h>
 
+#ifndef VALGRIND
+
 static int
 has_rdrand(void) {
     uint32_t eax, ecx;
@@ -43,6 +45,32 @@ rdrand32(void) {
     asm volatile ("%=: rdrand %0; jnc %=b" : "=r" (r) : : "cc");
     return r;
 }
+
+#else
+
+#include <stdlib.h>
+
+static int
+has_rdrand(void) {
+    return 1;
+}
+
+static inline uint64_t
+rdrand64_checked(void) {
+    return ((uint64_t) rand() << 32) | rand();
+}
+
+static inline uint64_t
+rdrand64(void) {
+    return ((uint64_t) rand() << 32) | rand();
+}
+
+static inline uint32_t
+rdrand32(void) {
+    return rand();
+}
+
+#endif
 
 /* https://lemire.me/blog/2016/06/30/fast-random-shuffling/ */
 static inline uint32_t
