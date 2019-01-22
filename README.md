@@ -12,16 +12,11 @@ and written partly as a demo for my Systems Programming
 
 ## Build and Run
 
-This program currently requires the `RDRAND`
-hardware-random-number CPU instruction, which is only
-available on modern Intel and AMD x86-64 processors. Future
-work hopefully will remove this restriction without impact
-on RNG quality and with not too much impact on performance.
+This program requires successful installation of the
+[`toyrand`](http://github.com/BartMassey/toyrand) PRNG.
 
 You should be able to type `make` and get the `bingo`
-executable. `make testrdrand` yields an executable that will
-do some basic sanity checking of the RNG and measure its
-performance a bit.
+executable.
 
 ## License
 
