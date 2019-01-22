@@ -7,12 +7,13 @@
 
 /* Fast Monte-Carlo Bingo sim. */
 
+#include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <toyrand.h>
 
 #include "bitboard.h"
-#include "rdrand.h"
 
 #ifdef LOGGING
 #define LOG(...) (printf(__VA_ARGS__))
@@ -54,23 +55,26 @@ struct card {
  * of marker values to initialize with, initialize the array
  * with a random permutation of the spanned markers.
  */
-static void random_markers(uint8_t *markers, int start, int end) {
+static void random_markers(struct toyrand_pool *pool,
+                           uint8_t *markers,
+                           int start, int end)
+{
     for (int m = start; m < end; m++) {
         uint32_t i = m - start;
-        uint32_t j = randrange(i + 1);
+        uint32_t j = toyrand_randrange32(pool, i + 1);
         markers[i] = markers[j];
         markers[j] = m;
     }
 }
 
-static struct card make_card() {
+static struct card make_card(struct toyrand_pool *pool) {
     struct card card;
 
     /* Select squares for this card. */
     uint8_t markers[MARKER_ROWS];
     for (int col = 0; col < CARD_SIZE; col++) {
         int base = col * MARKER_ROWS;
-        random_markers(markers, base, base + MARKER_ROWS);
+        random_markers(pool, markers, base, base + MARKER_ROWS);
         for (int row = 0; row < CARD_SIZE; row++)
             card.squares[row][col] = markers[row];
     }
@@ -138,11 +142,11 @@ static void print_card(struct card *card) {
 #endif
 }
 
-static enum win_class run_game(void) {
+static enum win_class run_game(struct toyrand_pool *pool) {
     struct bitboard markers = bitboard_new();
-    struct card card = make_card();
+    struct card card = make_card(pool);
     uint8_t draw[NMARKERS];
-    random_markers(draw, 0, NMARKERS);
+    random_markers(pool, draw, 0, NMARKERS);
 
     print_card(&card);
 
@@ -181,19 +185,17 @@ static void print_win(enum win_class win) {
 int main(int argc, char **argv) {
     int ngames;
     if (argc != 2 || (ngames = atoi(argv[1])) <= 0) {
-        fprintf(stderr, "bingo: usage: bingo <ngames>");
+        fprintf(stderr, "bingo: usage: bingo <ngames>\n");
         return 1;
     }
     LOG("%d games\n\n", ngames);
-    if (!has_rdrand()) {
-        fprintf(stderr, "program requires RDRAND CPU instruction: exiting\n");
-        return 1;
-    }
+    struct toyrand_pool *pool = toyrand_make_pool(128);
+    assert(pool);
     uint64_t win_counts[WIN_TOTAL] = {0, 0, 0};
 
     for (int i = 0; i < ngames; i++) {
         LOG("game %d:\n", i);
-        enum win_class win = run_game();
+        enum win_class win = run_game(pool);
         win_counts[win]++;
         print_win(win);
     }

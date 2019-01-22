@@ -5,18 +5,15 @@
 
 CC = gcc
 #CDEBUG = -g -DLOGGING
-CDEBUG = -O4 -DRDRAND
-CFLAGS = $(CDEBUG) -Wall
+CDEBUG = -O4
+INCLUDES = -I/usr/local/include
+LIBS = -L/usr/local/lib -ltoyrand
+CFLAGS = $(CDEBUG) -Wall $(INCLUDES)
 
 bingo: bingo.o bitboard.o
-	$(CC) $(CFLAGS) -o bingo bingo.o bitboard.o
-
-testrdrand: testrdrand.c
-	$(CC) $(CFLAGS) -o testrdrand testrdrand.c
+	$(CC) $(CFLAGS) -o bingo bingo.o bitboard.o $(LIBS)
 
 bingo.o bitboard.o: bitboard.h
 
-bingo.o testrdrand: rdrand.h
-
 clean:
-	-rm -f *.o bingo testrdrand
+	-rm -f *.o bingo
