@@ -192,7 +192,9 @@ int main(int argc, char **argv) {
         return 1;
     }
     LOG("%d games\n\n", ngames);
-    struct toyrand_pool *pool = toyrand_make_pool(128);
+    /* Needs minimum of 364 bits; we round up and double to
+       get 32 * 4 * 8 = 1024 bits. */
+    struct toyrand_pool *pool = toyrand_make_pool(32);
     assert(pool);
     uint64_t win_counts[WIN_TOTAL] = {0, 0, 0};
 
