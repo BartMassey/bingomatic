@@ -8,7 +8,8 @@ CC = gcc
 CDEBUG = -O4
 INCLUDES = -I/usr/local/include
 LIBS = -L/usr/local/lib -ltoyrand
-CFLAGS = $(CDEBUG) -Wall $(INCLUDES)
+DEFINES = # -DRECARD
+CFLAGS = $(CDEBUG) -Wall $(INCLUDES) $(DEFINES)
 
 bingo: bingo.o bitboard.o
 	$(CC) $(CFLAGS) -o bingo bingo.o bitboard.o $(LIBS)

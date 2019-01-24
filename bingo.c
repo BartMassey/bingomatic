@@ -142,20 +142,23 @@ static void print_card(struct card *card) {
 #endif
 }
 
-static enum win_class run_game(struct toyrand_pool *pool) {
+static enum win_class run_game(struct card *card, struct toyrand_pool *pool) {
     struct bitboard markers = bitboard_new();
-    struct card card = make_card(pool);
+    if (!card) {
+        struct card new_card = make_card(pool);
+        card = &new_card;
+    }
     uint8_t draw[NMARKERS];
     random_markers(pool, draw, 0, NMARKERS);
 
-    print_card(&card);
+    print_card(card);
 
     for (int turn = 0; turn < NMARKERS; turn++) {
         uint8_t m = draw[turn];
         LOG("%s\n", marker_string(m));
         bitboard_setbit(&markers, m);
         for (int b = 0; b < BINGO_TOTAL; b++) {
-            if (bitboard_subset(&card.bingos[b], &markers)) {
+            if (bitboard_subset(&card->bingos[b], &markers)) {
                 if (b < BINGO_ROWS)
                     return WIN_ROW;
                 if (b < BINGO_COLS)
@@ -193,9 +196,16 @@ int main(int argc, char **argv) {
     assert(pool);
     uint64_t win_counts[WIN_TOTAL] = {0, 0, 0};
 
+#ifndef RECARD
+    struct card new_card = make_card(pool);
+#endif
     for (int i = 0; i < ngames; i++) {
         LOG("game %d:\n", i);
-        enum win_class win = run_game(pool);
+#ifndef RECARD
+        enum win_class win = run_game(&new_card, pool);
+#else
+        enum win_class win = run_game(0, pool);
+#endif
         win_counts[win]++;
         print_win(win);
     }
