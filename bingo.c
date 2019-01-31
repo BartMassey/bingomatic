@@ -45,9 +45,17 @@ enum win_class {
     WIN_TOTAL,
 };
 
+struct markings {
+    uint8_t increments[CARD_SIZE * CARD_SIZE];
+    uint8_t d_counters;
+    uint16_t markers_high;
+    uint32_t rc_counters;
+    uint64_t markers_low;
+}
+
 struct card {
     uint8_t squares[CARD_SIZE][CARD_SIZE];
-    struct bitboard bingos[BINGO_TOTAL];
+    struct markings *markings;
 };
 
 /*
