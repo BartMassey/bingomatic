@@ -12,4 +12,5 @@
 #include "bingo.h"
 
 extern void bitboard_clear(struct markings *b);
+extern void bitboard_set(struct markings *b, int bit);
 extern int bitboard_mark(struct markings *b, int bit);

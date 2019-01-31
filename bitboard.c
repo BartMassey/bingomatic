@@ -17,6 +17,18 @@ void bitboard_clear(struct markings *b) {
     b->markers_low = 0;
 }
 
+void bitboard_set(struct markings *b, int bit) {
+    assert(sizeof b->markers_low == 8);
+    assert(sizeof b->markers_high == 2);
+    if (bit < 64) {
+        uint64_t low_posn = 1L << bit;
+        b->markers_low |= low_posn;
+        return;
+    }
+    uint16_t high_posn = 1 << (bit - 64);
+    b->markers_high |= high_posn;
+}
+
 /*
  * Returns -1 if the given bit isn't set in the markings bitboard.
  * Otherwise returns the index into the markings instructions (0..24).
