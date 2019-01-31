@@ -21,37 +21,14 @@
 #define LOG(...) /**/
 #endif
 
-#define CARD_SIZE 5
 #define MARKER_ROWS 15
 #define NMARKERS (CARD_SIZE * MARKER_ROWS)
 
-/*
- * Storage order for bingo bitboards:
- *   Row 0, 1 .. 4
- *   Col 0, 1 .. 4
- *   "Negative Diagonal" (0,0), (1,1) .. (4,4)
- *   "Positive Diagonal" (4,0), (3,1) .. (0,4)
- */
 enum bingos {
     BINGO_ROWS = CARD_SIZE,
     BINGO_COLS = BINGO_ROWS + CARD_SIZE,
     BINGO_TOTAL = BINGO_COLS + 2,
 };
-
-enum win_class {
-    WIN_ROW,
-    WIN_COL,
-    WIN_DIAG,
-    WIN_TOTAL,
-};
-
-struct markings {
-    uint8_t increments[CARD_SIZE * CARD_SIZE];
-    uint8_t d_counters;
-    uint16_t markers_high;
-    uint32_t rc_counters;
-    uint64_t markers_low;
-}
 
 struct card {
     uint8_t squares[CARD_SIZE][CARD_SIZE];

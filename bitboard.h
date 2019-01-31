@@ -9,10 +9,7 @@
 
 #include <stdint.h>
 
-struct bitboard {
-    uint64_t bits[2];
-};
+#include "bingo.h"
 
-extern struct bitboard bitboard_new();
-extern void bitboard_setbit(struct bitboard *b, int bit);
-extern int bitboard_subset(struct bitboard *b, struct bitboard *has);
+extern void bitboard_clear(struct markings *b);
+extern int bitboard_mark(struct markings *b, int bit);
