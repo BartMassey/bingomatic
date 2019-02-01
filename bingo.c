@@ -86,11 +86,12 @@ static struct card make_card(struct toyrand_pool *pool) {
             assert(index != -1);
             card.markings->increments[index] = incr;
         }
-
-        /* Set up counters. */
-        card.markings->d_counters = 0;
-        card.markings->rc_counters = 0;
     }
+
+    /* Clear counters for initial use. (Must be reset if the
+       board is reused.) */
+    card.markings->d_counters = 0;
+    card.markings->rc_counters = 0;
 
     return card;
 }
@@ -110,12 +111,8 @@ static char *marker_string(uint8_t m) {
     assert(w <= sizeof buf);
     return buf;
 }
-#endif
 
 static void print_card(struct card *card) {
-#ifndef LOGGING
-    return;
-#else
     for (int row = 0; row < CARD_SIZE; row++) {
         char *sep = "";
         for (int col = 0; col < CARD_SIZE; col++) {
@@ -125,8 +122,8 @@ static void print_card(struct card *card) {
         printf("\n");
     }
     printf("\n");
-#endif
 }
+#endif
 
 /* Number of wins by row, column, or diagonal. */
 uint64_t win_counters[3][5];
@@ -157,7 +154,9 @@ static void run_game(struct card *card, struct toyrand_pool *pool) {
     uint8_t draw[NMARKERS];
     random_markers(pool, draw, 0, NMARKERS);
 
+#ifdef LOGGING
     print_card(card);
+#endif
 
     /* Run the game. */
     for (int turn = 0; turn < NMARKERS; turn++) {
@@ -175,8 +174,8 @@ static void run_game(struct card *card, struct toyrand_pool *pool) {
         int col = incr & 0x7;
         int n_diag = (incr >> 7) & 1;
         int p_diag = (incr >> 6) & 1;
-        uint64_t counter_add = 1L << (3 * row);
-        counter_add |= 1L << (3 * (CARD_SIZE + col));
+        uint64_t counter_add = 1L << (3 * col);
+        counter_add |= 1L << (3 * (CARD_SIZE + row));
         counter_add |= (uint64_t) (p_diag | (n_diag << 3)) << (6 * CARD_SIZE);
 
         /* Test for win. */
