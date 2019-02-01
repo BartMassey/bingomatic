@@ -125,6 +125,9 @@ static void print_card(struct card *card) {
 }
 #endif
 
+/* Number of turns played so far. */
+uint64_t turns_counter;
+
 /* Number of wins by row, column, or diagonal. */
 uint64_t win_counters[3][5];
 
@@ -197,6 +200,7 @@ static void run_game(struct card *card, struct toyrand_pool *pool) {
                 win_counters[WIN_DIAG][P_DIAG]++;
             if (counters & (1L << (6 * CARD_SIZE + 5)))
                 win_counters[WIN_DIAG][N_DIAG]++;
+            turns_counter += turn;
             return;
         }
 
@@ -254,6 +258,7 @@ int main(int argc, char **argv) {
     uint64_t ndiag = win_counters[WIN_DIAG][N_DIAG];
     printf("neg diag: %ld\n", ndiag);
     printf("total: %ld\n", row_total + col_total + pdiag + ndiag);
+    printf("avg turns: %g\n", (double) turns_counter / ngames);
 
     return 0;
 }
