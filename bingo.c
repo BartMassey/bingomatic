@@ -164,8 +164,8 @@ static void run_game(struct card *card, struct toyrand_pool *pool) {
 
         /* Set up for counter test / increment. */
         uint8_t incr = card->markings->increments[index];
-        int row = incr & 0xf;
-        int col = (incr >> 3) & 0xf;
+        int row = incr & 0x7;
+        int col = (incr >> 3) & 0x7;
         int n_diag = (incr >> 7) & 1;
         int p_diag = (incr >> 6) & 1;
         uint64_t counter_add = 1L << (3 * row);
