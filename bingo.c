@@ -13,7 +13,7 @@
 #include <stdlib.h>
 #include <toyrand.h>
 
-#include "bitboard.h"
+#include "bingo.h"
 
 #ifdef LOGGING
 #define LOG(...) (printf(__VA_ARGS__))
@@ -64,32 +64,33 @@ static struct card make_card(struct toyrand_pool *pool) {
             card.squares[row][col] = markers[row];
     }
 
-    /* Populate the bitboards for the winning positions. */
-    struct bitboard *b;
-    /* Row wins. */
-    for (int row = 0; row < CARD_SIZE; row++) {
-        b = &card.bingos[row];
-        *b = bitboard_new();
+    /* Initialize the markings. */
+    card.markings = malloc(sizeof card.markings);
+    assert(card.markings);
+
+    /* Set up the bitboard. */
+    bitboard_clear(card.markings);
+    for (int row = 0; row < CARD_SIZE; row++)
         for (int col = 0; col < CARD_SIZE; col++)
-            bitboard_setbit(b, card.squares[row][col]);
+            bitboard_set(card.markings, card.squares[row][col]);
+
+    /* Set up the indices. (This is the tricky part.) */
+    for (int row = 0; row < CARD_SIZE; row++) {
+        for (int col = 0; col < CARD_SIZE; col++) {
+            uint8_t incr = (row << 3) | col;
+            if (row == col)
+                incr |= 0x80;
+            if (CARD_SIZE - 1 - row == col)
+                incr |= 0x40;
+            int index = bitboard_mark(card.markings, card.squares[row][col]);
+            assert(index != -1);
+            card.markings->increments[index] = incr;
+        }
+
+        /* Set up counters. */
+        card.markings->d_counters = 0;
+        card.markings->rc_counters = 0;
     }
-    /* Column wins. */
-    for (int col = 0; col < CARD_SIZE; col++) {
-        b = &card.bingos[BINGO_ROWS + col];
-        *b = bitboard_new();
-        for (int row = 0; row < CARD_SIZE; row++)
-            bitboard_setbit(b, card.squares[row][col]);
-    }
-    /* Negative diagonal win. */
-    b = &card.bingos[BINGO_COLS];
-    *b = bitboard_new();
-    for (int diag = 0; diag < CARD_SIZE; diag++)
-        bitboard_setbit(b, card.squares[diag][diag]);
-    /* Positive diagonal win. */
-    b = &card.bingos[BINGO_COLS + 1];
-    *b = bitboard_new();
-    for (int diag = 0; diag < CARD_SIZE; diag++)
-        bitboard_setbit(b, card.squares[CARD_SIZE - diag - 1][diag]);
 
     return card;
 }
@@ -127,8 +128,22 @@ static void print_card(struct card *card) {
 #endif
 }
 
-static enum win_class run_game(struct card *card, struct toyrand_pool *pool) {
-    struct bitboard markers = bitboard_new();
+/* Number of wins by row, column, or diagonal. */
+uint64_t win_counters[3][5];
+
+enum win_indices {
+    WIN_ROW,
+    WIN_COL,
+    WIN_DIAG,
+};
+
+enum diagonals {
+    P_DIAG,
+    N_DIAG,
+};
+
+static void run_game(struct card *card, struct toyrand_pool *pool) {
+    assert(CARD_SIZE == 5);
     if (!card) {
         struct card new_card = make_card(pool);
         card = &new_card;
@@ -141,33 +156,52 @@ static enum win_class run_game(struct card *card, struct toyrand_pool *pool) {
     for (int turn = 0; turn < NMARKERS; turn++) {
         uint8_t m = draw[turn];
         LOG("%s\n", marker_string(m));
-        bitboard_setbit(&markers, m);
-        for (int b = 0; b < BINGO_TOTAL; b++) {
-            if (bitboard_subset(&card->bingos[b], &markers)) {
-                if (b < BINGO_ROWS)
-                    return WIN_ROW;
-                if (b < BINGO_COLS)
-                    return WIN_COL;
-                return WIN_DIAG;
-            }
+
+        /* Check for hit. */
+        int index = bitboard_mark(card->markings, m);
+        if (index == -1)
+            continue;
+
+        /* Set up for counter test / increment. */
+        uint8_t incr = card->markings->increments[index];
+        int row = incr & 0xf;
+        int col = (incr >> 3) & 0xf;
+        int n_diag = (incr >> 7) & 1;
+        int p_diag = (incr >> 6) & 1;
+        uint64_t counter_add = 1L << (3 * row);
+        counter_add |= 1L << (3 * (CARD_SIZE + col));
+        counter_add |= (uint64_t) (p_diag | (n_diag << 3)) << (6 * CARD_SIZE);
+
+        /* Test for win. */
+        uint64_t counters = card->markings->rc_counters;
+        counters |= (uint64_t) (card->markings->d_counters) << (6 * CARD_SIZE);
+        /* Check for some counter to be incremented but
+           already equal to 4. */
+        if (counters & (counter_add << 2)) {
+            /*
+             * Note that there could be "ties" here: row,
+             * column and 1 or 2 diagonal wins at the same time.
+             * We will count them all.
+             */
+            if (counters & (1L << (3 * col + 2)))
+                win_counters[WIN_COL][col]++;
+            if (counters & (1L << (3 * (CARD_SIZE + row) + 2)))
+                win_counters[WIN_ROW][row]++;
+            if (counters & (1L << (6 * CARD_SIZE + 2)))
+                win_counters[WIN_DIAG][P_DIAG]++;
+            if (counters & (1L << (6 * CARD_SIZE + 5)))
+                win_counters[WIN_DIAG][N_DIAG]++;
+            return;
         }
+
+        /* Bump the counts and put them back. */
+        counters += counter_add;
+        card->markings->rc_counters = counters & ((1L << (6 * CARD_SIZE)) - 1);
+        card->markings->d_counters = counters >> (6 * CARD_SIZE);
     }
 
-    /* All the markers are gone, and no one has bingoed. */
+    /* All the markers are gone, yet no bingo. */
     assert(0);
-}
-
-static void print_win(enum win_class win) {
-#ifndef LOGGING
-    return;
-#else
-    switch (win) {
-    case WIN_ROW: LOG("row win\n\n"); break;
-    case WIN_COL: LOG("col win\n\n"); break;
-    case WIN_DIAG: LOG("diag win\n\n"); break;
-    default: assert(0);
-    }
-#endif
 }
 
 int main(int argc, char **argv) {
@@ -181,7 +215,6 @@ int main(int argc, char **argv) {
        get 32 * 4 * 8 = 1024 bits. */
     struct toyrand_pool *pool = toyrand_make_pool(32);
     assert(pool);
-    uint64_t win_counts[WIN_TOTAL] = {0, 0, 0};
 
 #ifndef RECARD
     struct card new_card = make_card(pool);
@@ -189,16 +222,17 @@ int main(int argc, char **argv) {
     for (int i = 0; i < ngames; i++) {
         LOG("game %d:\n", i);
 #ifndef RECARD
-        enum win_class win = run_game(&new_card, pool);
+        run_game(&new_card, pool);
 #else
-        enum win_class win = run_game(0, pool);
+        run_game(0, pool);
 #endif
-        win_counts[win]++;
-        print_win(win);
     }
 
-    printf("%ld row\n", win_counts[WIN_ROW]);
-    printf("%ld col\n", win_counts[WIN_COL]);
-    printf("%ld diag\n", win_counts[WIN_DIAG]);
+    for (int i = 0; i < CARD_SIZE; i++)
+        printf("row %d: %ld\n", i, win_counters[WIN_ROW][i]);
+    for (int i = 0; i < CARD_SIZE; i++)
+        printf("col %d: %ld\n", i, win_counters[WIN_COL][i]);
+    printf("pos diag: %ld\n", win_counters[WIN_DIAG][P_DIAG]);
+    printf("neg diag: %ld\n", win_counters[WIN_DIAG][N_DIAG]);
     return 0;
 }

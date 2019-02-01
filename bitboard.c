@@ -8,8 +8,9 @@
 /* Bingo-specific implementation of bitboards. */
 
 #include <assert.h>
+#include <stdint.h>
 
-#include "bitboard.h"
+#include "bingo.h"
 #include "popcnt.h"
 
 void bitboard_clear(struct markings *b) {

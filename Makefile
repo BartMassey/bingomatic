@@ -14,7 +14,7 @@ CFLAGS = $(CDEBUG) -Wall $(INCLUDES) $(DEFINES)
 bingo: bingo.o bitboard.o
 	$(CC) $(CFLAGS) -o bingo bingo.o bitboard.o $(LIBS)
 
-bingo.o bitboard.o: bitboard.h bingo.h
+bingo.o bitboard.o: bingo.h
 
 bitboard.o: popcnt.h
 

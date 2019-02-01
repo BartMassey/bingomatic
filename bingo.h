@@ -16,3 +16,7 @@ struct markings {
     uint32_t rc_counters;
     uint64_t markers_low;
 };
+
+extern void bitboard_clear(struct markings *b);
+extern void bitboard_set(struct markings *b, int bit);
+extern int bitboard_mark(struct markings *b, int bit);
