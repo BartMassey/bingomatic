@@ -37,17 +37,19 @@ void bitboard_set(struct markings *b, int bit) {
 int bitboard_mark(struct markings *b, int bit) {
     assert(sizeof b->markers_low == 8);
     assert(sizeof b->markers_high == 2);
+    uint64_t markers_low = b->markers_low;
     if (bit < 64) {
         uint64_t low_posn = 1L << bit;
-        if (!(b->markers_low & low_posn))
+        if (!(markers_low & low_posn))
             return -1;
-        uint64_t low_bits = b->markers_low & (low_posn - 1);
-        return (int) popcnt(&low_bits, 8);
+        uint64_t low_bits = markers_low & (low_posn - 1);
+        return (int) popcnt(&low_bits, sizeof low_bits);
     }
     uint16_t high_posn = 1 << (bit - 64);
-    if (!(b->markers_high & high_posn))
+    uint16_t markers_high = b->markers_high;
+    if (!(markers_high & high_posn))
         return -1;
-    int low_bits = (int) popcnt(&b->markers_low, 8);
-    uint16_t high_bits = b->markers_high & (high_posn - 1);
-    return low_bits + (int) popcnt(&high_bits, 2);
+    int low_count = (int) popcnt(&markers_low, sizeof markers_low);
+    uint16_t high_bits = markers_high & (high_posn - 1);
+    return low_count + (int) popcnt(&high_bits, sizeof high_bits);
 }
