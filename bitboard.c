@@ -11,7 +11,6 @@
 #include <stdint.h>
 
 #include "bingo.h"
-#include "popcnt.h"
 
 void bitboard_clear(struct markings *b) {
     b->markers_high = 0;
@@ -43,13 +42,13 @@ int bitboard_mark(struct markings *b, int bit) {
         if (!(markers_low & low_posn))
             return -1;
         uint64_t low_bits = markers_low & (low_posn - 1);
-        return (int) popcnt(&low_bits, sizeof low_bits);
+        return __builtin_popcountl(low_bits);
     }
     uint16_t high_posn = 1 << (bit - 64);
     uint16_t markers_high = b->markers_high;
     if (!(markers_high & high_posn))
         return -1;
-    int low_count = (int) popcnt(&markers_low, sizeof markers_low);
+    int low_count = __builtin_popcountl(markers_low);
     uint16_t high_bits = markers_high & (high_posn - 1);
-    return low_count + (int) popcnt(&high_bits, sizeof high_bits);
+    return low_count + __builtin_popcount(high_bits);
 }

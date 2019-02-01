@@ -23,8 +23,3 @@ executable.
 This program is licensed under the "MIT License".  Please
 see the file `LICENSE` in the source distribution of this
 software for license terms.
-
-The file `popcnt.h` is by Kim Walisch and Wojciech Muła and
-is licensed under the "Simplified (2-clause) BSD` license.
-Please see this file in the source distribution for license
-terms.
