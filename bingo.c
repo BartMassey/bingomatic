@@ -235,11 +235,25 @@ int main(int argc, char **argv) {
 #endif
     }
 
-    for (int i = 0; i < CARD_SIZE; i++)
-        printf("row %d: %ld\n", i, win_counters[WIN_ROW][i]);
-    for (int i = 0; i < CARD_SIZE; i++)
-        printf("col %d: %ld\n", i, win_counters[WIN_COL][i]);
-    printf("pos diag: %ld\n", win_counters[WIN_DIAG][P_DIAG]);
-    printf("neg diag: %ld\n", win_counters[WIN_DIAG][N_DIAG]);
+    uint64_t row_total = 0;
+    for (int i = 0; i < CARD_SIZE; i++) {
+        uint64_t c = win_counters[WIN_ROW][i];
+        printf("row %d: %ld\n", i, c);
+        row_total += c;
+    }
+    printf("row total: %ld\n", row_total);
+    uint64_t col_total = 0;
+    for (int i = 0; i < CARD_SIZE; i++) {
+        uint64_t c = win_counters[WIN_COL][i];
+        printf("col %d: %ld\n", i, c);
+        col_total += c;
+    }
+    printf("col total: %ld\n", col_total);
+    uint64_t pdiag = win_counters[WIN_DIAG][P_DIAG];
+    printf("pos diag: %ld\n", pdiag);
+    uint64_t ndiag = win_counters[WIN_DIAG][N_DIAG];
+    printf("neg diag: %ld\n", ndiag);
+    printf("total: %ld\n", row_total + col_total + pdiag + ndiag);
+
     return 0;
 }
