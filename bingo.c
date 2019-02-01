@@ -144,15 +144,22 @@ enum diagonals {
 
 static void run_game(struct card *card, struct toyrand_pool *pool) {
     assert(CARD_SIZE == 5);
+
+    /* Set up the card. */
     if (!card) {
         struct card new_card = make_card(pool);
         card = &new_card;
     }
+    card->markings->d_counters = 0;
+    card->markings->rc_counters = 0;
+
+    /* Draw all the markers. */
     uint8_t draw[NMARKERS];
     random_markers(pool, draw, 0, NMARKERS);
 
     print_card(card);
 
+    /* Run the game. */
     for (int turn = 0; turn < NMARKERS; turn++) {
         uint8_t m = draw[turn];
         LOG("%s\n", marker_string(m));
@@ -164,8 +171,8 @@ static void run_game(struct card *card, struct toyrand_pool *pool) {
 
         /* Set up for counter test / increment. */
         uint8_t incr = card->markings->increments[index];
-        int row = incr & 0x7;
-        int col = (incr >> 3) & 0x7;
+        int row = (incr >> 3) & 0x7;
+        int col = incr & 0x7;
         int n_diag = (incr >> 7) & 1;
         int p_diag = (incr >> 6) & 1;
         uint64_t counter_add = 1L << (3 * row);
@@ -196,7 +203,8 @@ static void run_game(struct card *card, struct toyrand_pool *pool) {
 
         /* Bump the counts and put them back. */
         counters += counter_add;
-        card->markings->rc_counters = counters & ((1L << (6 * CARD_SIZE)) - 1);
+        card->markings->rc_counters =
+            counters & ((1L << (6 * CARD_SIZE + 1)) - 1);
         card->markings->d_counters = counters >> (6 * CARD_SIZE);
     }
 
