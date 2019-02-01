@@ -16,7 +16,5 @@ bingo: bingo.o bitboard.o
 
 bingo.o bitboard.o: bingo.h
 
-bitboard.o: popcnt.h
-
 clean:
 	-rm -f *.o bingo
