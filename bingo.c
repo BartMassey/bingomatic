@@ -65,7 +65,7 @@ static struct card make_card(struct toyrand_pool *pool) {
     }
 
     /* Initialize the markings. */
-    card.markings = malloc(sizeof card.markings);
+    card.markings = malloc(sizeof *card.markings);
     assert(card.markings);
 
     /* Set up the bitboard. */
