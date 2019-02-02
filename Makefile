@@ -11,10 +11,10 @@ LIBS = -L/usr/local/lib -ltoyrand
 DEFINES = # -DRECARD
 CFLAGS = $(CDEBUG) -Wall $(INCLUDES) $(DEFINES)
 
-bingo: bingo.o bitboard.o
-	$(CC) $(CFLAGS) -o bingo bingo.o bitboard.o $(LIBS)
+bingo: bingo.o
+	$(CC) $(CFLAGS) -o bingo bingo.o $(LIBS)
 
-bingo.o bitboard.o: bingo.h
+bingo.o: bingo.h
 
 clean:
 	-rm -f *.o bingo
